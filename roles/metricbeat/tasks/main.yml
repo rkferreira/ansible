@@ -1,0 +1,55 @@
+---
+- name: Download repo key
+  get_url:
+    url: https://packages.elastic.co/GPG-KEY-elasticsearch
+    dest: /tmp/GPG-KEY-elasticsearch
+    mode: '0444'
+
+- name: Import key
+  command: sudo rpm --import /tmp/GPG-KEY-elasticsearch
+
+- name: Elastic Repo
+  copy:
+    content: |
+              [elastic-7.x]
+              name=Elastic repository for 7.x packages
+              baseurl=https://artifacts.elastic.co/packages/7.x/yum
+              gpgcheck=1
+              gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+              enabled=1
+              autorefresh=1
+              type=rpm-md
+    dest: /etc/yum.repos.d/elastic.repo
+
+- name: ensure a list of packages installed
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - metricbeat
+
+- name: Put conf file
+  template:
+    src: "{{ role_path }}/templates/metricbeat.j2"
+    dest: /etc/metricbeat/metricbeat.yml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart Metricbeat
+
+- name: Modules
+  copy: 
+    src: "{{ role_path }}/templates/modules_{{ item.src_file }}.yml"
+    dest: "/etc/metricbeat/modules.d/{{ item.src_file }}.yml"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+  - { src_file: "system" }
+  notify: restart Metricbeat
+
+- name: Ensure metricbeat is running
+  systemd:
+    name: metricbeat
+    state: started
+    enabled: yes

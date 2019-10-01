@@ -1,0 +1,24 @@
+##### By ansible
+###
+##
+# if you need new options, check default metricbeat.reference.yml file and update template
+#
+metricbeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+setup.template.overwrite: false
+setup.template.settings:
+  index.number_of_shards: 1
+  index.codec: best_compression
+
+output.elasticsearch:
+  hosts: ["http://{{ ansible_facts['eth0']['ipv4']['address'] }}:30920"]
+  enabled: true
+
+processors:
+  - add_host_metadata: ~
+  - add_cloud_metadata: ~
+
+logging.level: info
+logging.selectors: ["*"]

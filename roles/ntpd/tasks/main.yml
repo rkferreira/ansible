@@ -1,0 +1,22 @@
+---
+- name: ensure a list of packages installed
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - ntp
+
+- name: Put conf file
+  template:
+    src: "{{ role_path }}/templates/ntp.conf"
+    dest: /etc/ntp.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart Ntpd
+
+- name: Ensure ntpd is running
+  systemd:
+    name: ntpd
+    state: started
+    enabled: yes

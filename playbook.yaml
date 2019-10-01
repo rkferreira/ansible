@@ -1,0 +1,4 @@
+- hosts: '{{ tgt_host }}'
+  roles:
+  - metricbeat
+  - ntpd
