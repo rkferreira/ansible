@@ -1,0 +1,15 @@
+
+---
+
+- hosts: all
+
+  tasks:
+  - debug:
+      msg: "  list_users is going to access PASSWD and get all users that UID is under ^[5-9]XX and ^[0-9]XXXX "
+
+  - name: listusers-get
+    shell: 'getent passwd | grep -E -o "\b(.*:x:(([5-9]{1,1}[0-9]{2,2}|[0-9]{4,99})):)\b" | cut -d: -f1 | awk ''{printf ("%30s\t\t%s\n", $1, "{{ansible_hostname}} {{ansible_default_ipv4.address}}" )}'' '
+    register: list_users
+
+  - name: listusers-result
+    local_action: 'copy content={{ list_users.stdout }} dest=../results/listusers.txt-{{ansible_hostname}}'
