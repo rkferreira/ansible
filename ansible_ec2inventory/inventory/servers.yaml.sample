@@ -1,0 +1,54 @@
+all:
+  hosts:
+    vm-bastion:
+      ansible_host: 192.168.2.4
+    vm-z1-master0:
+      ansible_host: 192.168.3.6
+    vm-z2-master1:
+      ansible_host: 192.168.3.5
+    vm-z3-master2:
+      ansible_host: 192.168.3.4
+    vm-z1-infra0:
+      ansible_host: 192.168.4.11
+    vm-z2-infra1:
+      ansible_host: 192.168.4.9
+    vm-z3-infra2:
+      ansible_host: 192.168.4.10
+    vm-z1-minion-a0:
+      ansible_host: 192.168.4.5
+    vm-z1-minion-b0:
+      ansible_host: 192.168.4.12
+    vm-z2-minion-a1:
+      ansible_host: 192.168.4.8
+    vm-z2-minion-b1:
+      ansible_host: 192.168.4.7
+    vm-z3-minion-a2:
+      ansible_host: 192.168.4.6
+    vm-z3-minion-b2:
+      ansible_host: 192.168.4.4
+  children:
+    vms:
+      children:
+        bastion:
+          hosts:
+            vm-bastion
+        kubernetes:
+          children:
+            master:
+              hosts:
+                vm-z1-master0:
+                vm-z2-master1:
+                vm-z3-master2:
+            infra:
+              hosts:
+                vm-z1-infra0:
+                vm-z2-infra1:
+                vm-z3-infra2:
+            minion:
+              hosts:
+                vm-z1-minion-a0:
+                vm-z1-minion-b0:
+                vm-z2-minion-a1:
+                vm-z2-minion-b1:
+                vm-z3-minion-a2:
+                vm-z3-minion-b2:

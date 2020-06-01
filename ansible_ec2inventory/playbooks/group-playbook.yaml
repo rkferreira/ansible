@@ -1,0 +1,3 @@
+- hosts: ec2group1
+  roles:
+    - cloudwatch-agent

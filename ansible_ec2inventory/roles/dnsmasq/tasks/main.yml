@@ -1,0 +1,57 @@
+---
+- name: ensure a list of packages installed
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - dnsmasq
+
+- name: add dnsmasq user and group
+  user:
+    name: dnsmasq
+    system: yes
+    create_home: no
+    home: /home/dnsmasq
+    shell: /sbin/nologin
+    state: present
+
+- name: put dnsmasq resolv
+  template:
+    src: "{{ role_path }}/templates/resolv-dnsmasq.j2"
+    dest: /etc/resolv.dnsmasq
+    owner: root
+    group: dnsmasq
+    mode: '0644'
+
+- name: put conf file
+  template:
+    src: "{{ role_path }}/templates/dnsmasq-conf.j2"
+    dest: /etc/dnsmasq.conf
+    owner: root
+    group: dnsmasq
+    mode: '0644'
+  notify: restart dnsmasq
+
+- name: ensure dnsmasq is running
+  service:
+    name: dnsmasq
+    state: started
+    enabled: yes
+
+- name: get service status
+  service_facts:
+  register: services_state
+
+- name: config resolv nameserver
+  lineinfile:
+    path: /etc/resolv.conf
+    line: nameserver 127.0.0.1
+    backup: yes
+  when: (services_state.ansible_facts.services['dnsmasq.service'] is defined and services_state.ansible_facts.services['dnsmasq.service'].state == 'running') or (services_state.ansible_facts.services['dnsmasq'] is defined and services_state.ansible_facts.services['dnsmasq'].state == 'running')
+
+- name: config resolv options
+  lineinfile:
+    path: /etc/resolv.conf
+    regexp: '^options'
+    line: options rotate timeout:2 attempts:5
+  when: (services_state.ansible_facts.services['dnsmasq.service'] is defined and services_state.ansible_facts.services['dnsmasq.service'].state == 'running') or (services_state.ansible_facts.services['dnsmasq'] is defined and services_state.ansible_facts.services['dnsmasq'].state == 'running')
