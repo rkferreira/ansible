@@ -79,7 +79,7 @@ filebeat.config.modules:
 #----------------------------- Redis output --------------------------------
 output.redis:
   # The Logstash hosts
-  hosts: ["internal-ac4f56033970d469792535fb60d6e02b-890514084.sa-east-1.elb.amazonaws.com:6379"]
+  hosts: ["internal-amazon:6379"]
 
 #================================ Processors =====================================
 
