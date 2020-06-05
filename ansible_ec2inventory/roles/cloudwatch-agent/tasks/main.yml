@@ -1,11 +1,22 @@
 ---
-- name: Install packages
+- name: Install packages Ubuntu
   apt:
     cache_valid_time: 86400
     pkg:
       - unzip
       - libwww-perl
       - libdatetime-perl
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Install packages RH
+  yum:
+    name:
+      - perl-Switch
+      - perl-DateTime
+      - perl-Sys-Syslog
+      - perl-LWP-Protocol-https
+      - perl-Digest-SHA
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'Amazon'
 
 - name: Check if cwa is installed
   stat:
