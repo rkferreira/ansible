@@ -1,0 +1,16 @@
+---
+- hosts: '{{ tgt_host }}'
+  vars:
+    filebeat_config_output_logstash: 'logstash.aws.com:5044'
+    filebeat_config_paths:
+      - /var/log/nginx/*.log
+      - /var/log/httpd/*_log
+  roles:
+    - filebeat
+---
+- hosts: '{{ tgt_host }}'
+  vars:
+    dnsmasq_listenaddress: "127.0.0.1"
+    dnsmasq_externaldns: "172.31.0.2"
+  roles:
+    - dnsmasq

@@ -1,0 +1,1 @@
+ansible-playbook -i inventory/my.aws_ec2.yml -l myapp-asg-1x1x1s  playbooks/servers/myapp.yaml -t supervisorctl_apps -b --check --diff

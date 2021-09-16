@@ -1,0 +1,15 @@
+- hosts: 127.0.0.1
+  vars:
+    cf_myapp05_go_global:
+      region: sa-east-1
+      profile: sre-myapp05
+    cf_myapp05_abc_deploy:
+      -
+        stackname: "cf-ansible-sre-prd-myapp05"
+        ec2name: "sre-prd-myapp05"
+        eipaddr: "200.8.8.8"
+        subnetid: "subnet-1x1x1x"
+        az: "us-east-1a"
+        createiamprofile: "yes"
+  roles:
+    - my-app05-role

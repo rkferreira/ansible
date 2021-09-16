@@ -1,0 +1,10 @@
+- name: Specific definitions for Amazon Linux 2
+  block:
+    - name: Amazon Extras repo for php7.3
+      shell: /usr/bin/amazon-linux-extras install php7.3
+      when:
+        - php_fpm_version is defined
+        - php_fpm_version == '7.3'
+  when:
+    - ansible_distribution == 'Amazon'
+    - ansible_distribution_major_version == '2'

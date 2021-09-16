@@ -1,0 +1,11 @@
+---
+
+- name: Reload supervisorctl
+  shell: "{{ supervisorctl_bin_path }} reload"
+
+- name: Reread supervisorctl
+  shell: "{{ supervisorctl_bin_path }} reread"
+  notify: Update supervisorctl
+
+- name: Update supervisorctl
+  shell: "{{ supervisorctl_bin_path }} update"

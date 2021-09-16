@@ -1,0 +1,17 @@
+---
+
+- name: Deploy myapp10 servers
+  cloudformation:
+    stack_name: "{{ item.stackname }}"
+    state: "present"
+    create_changeset: "{{ cf_myapp_go_global.changeset | default('no') }}"
+    region: "{{ cf_myapp_go_global.region }}"
+    profile: "{{ cf_myapp_go_global.profile }}"
+    template: "{{ role_path }}/templates/myapp10.cfn.yml"
+    template_parameters:
+      Ec2Name: "{{ item.ec2name }}"
+      EipAddr: "{{ item.eipaddr }}"
+      SubnetIds: "{{ item.subnetid | default('subnet-1x1x1s') }}"
+      Azs: "{{ item.az | default('us-east-1b') }}"
+      CreateIamProfile: "{{ item.createiamprofile | default('no') }}"
+  with_items: "{{ cf_myapp_go_deploy }}"

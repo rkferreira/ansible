@@ -1,0 +1,46 @@
+
+- name: Linux tunning myapp08 class
+  block:
+    - name: myapp08 net.ipv4.tcp_tw_reuse
+      sysctl:
+        name: net.ipv4.tcp_tw_reuse
+        value: '2'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+    - name: myapp08 net.ipv4.tcp_fin_timeout
+      sysctl:
+        name: net.ipv4.tcp_fin_timeout
+        value: '5'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+    - name: myapp08 net.ipv4.tcp_keepalive_intvl
+      sysctl:
+        name: net.ipv4.tcp_keepalive_intvl
+        value: '10'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+    - name: myapp08 net.ipv4.tcp_keepalive_probes
+      sysctl:
+        name: net.ipv4.tcp_keepalive_probes
+        value: '3'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+    - name: myapp08 net.ipv4.tcp_keepalive_time
+      sysctl:
+        name: net.ipv4.tcp_keepalive_time
+        value: '75'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+  when:
+    - linux_tunning_server_class is defined
+    - linux_tunning_server_class == 'myapp08'

@@ -1,0 +1,191 @@
+---
+
+- name: Linux tunning base class
+  block:
+
+    - name: base fs.file-max
+      sysctl:
+        name: fs.file-max
+        value: '262144'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+
+    - name: base net.core.somaxconn (not c7)
+      sysctl:
+        name: net.core.somaxconn
+        value: '131072'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+      when:
+        - ansible_distribution != 'CentOS'
+        - ansible_distribution_major_version != '7'
+
+    - name: base net.core.somaxconn (c7)
+      sysctl:
+        name: net.core.somaxconn
+        value: '65535'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+      when:
+        - ansible_distribution == 'CentOS'
+        - ansible_distribution_major_version == '7'
+
+    - name: base net.ipv4.tcp_max_syn_backlog
+      sysctl:
+        name: net.ipv4.tcp_max_syn_backlog
+        value: '8192'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+
+    - name: base net.core.netdev_max_backlog
+      sysctl:
+        name: net.core.netdev_max_backlog
+        value: '4096'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+
+    - name: base net.ipv4.ip_local_port_range
+      sysctl:
+        name: net.ipv4.ip_local_port_range
+        value: '1024 65535'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+
+    - name: base net.unix.max_dgram_qlen
+      sysctl:
+        name: net.unix.max_dgram_qlen
+        value: '2048'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+
+    - name: base nofile soft all
+      pam_limits:
+        domain: '*'
+        limit_type: soft
+        limit_item: nofile
+        value: '262144'
+        use_max: yes
+        backup: yes
+        dest: "{{ linux_tunning_limits_file }}"
+
+    - name: base nofile hard all
+      pam_limits:
+        domain: '*'
+        limit_type: hard
+        limit_item: nofile
+        value: '262144'
+        use_max: yes
+        backup: yes
+        dest: "{{ linux_tunning_limits_file }}"
+
+    - name: base nproc soft all
+      pam_limits:
+        domain: '*'
+        limit_type: soft
+        limit_item: nproc
+        value: '131072'
+        use_max: yes
+        backup: yes
+        dest: "{{ linux_tunning_limits_file }}"
+
+    - name: base nproc hard all
+      pam_limits:
+        domain: '*'
+        limit_type: hard
+        limit_item: nproc
+        value: '131072'
+        use_max: yes
+        backup: yes
+        dest: "{{ linux_tunning_limits_file }}"
+
+    - name: base nofile soft root
+      pam_limits:
+        domain: 'root'
+        limit_type: soft
+        limit_item: nofile
+        value: '262144'
+        use_max: yes
+        backup: yes
+        dest: "{{ linux_tunning_limits_file }}"
+
+    - name: base nofile hard root
+      pam_limits:
+        domain: 'root'
+        limit_type: hard
+        limit_item: nofile
+        value: '262144'
+        use_max: yes
+        backup: yes
+        dest: "{{ linux_tunning_limits_file }}"
+
+    - name: base nproc soft root
+      pam_limits:
+        domain: 'root'
+        limit_type: soft
+        limit_item: nproc
+        value: '131072'
+        use_max: yes
+        backup: yes
+        dest: "{{ linux_tunning_limits_file }}"
+
+    - name: base nproc hard root
+      pam_limits:
+        domain: 'root'
+        limit_type: hard
+        limit_item: nproc
+        value: '131072'
+        use_max: yes
+        backup: yes
+        dest: "{{ linux_tunning_limits_file }}"
+
+
+- name: Linux tunning janusgw class
+  block:
+
+    - name: janusgw net.ipv4.tcp_fin_timeout
+      sysctl:
+        name: net.ipv4.tcp_fin_timeout
+        value: '10'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+
+    - name: janusgw increase w default 200k to 1MB
+      sysctl:
+        name: net.core.wmem_max
+        value: '1048576'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+
+    - name: janusgw increase r default 200k to 1MB
+      sysctl:
+        name: net.core.rmem_max
+        value: '1048576'
+        sysctl_set: yes
+        sysctl_file: "{{ linux_tunning_sysctl_file }}"
+        state: present
+        reload: yes
+
+  when:
+    - linux_tunning_server_class is defined
+    - linux_tunning_server_class == 'janusgw'
+
+- name: Include customization per server class
+  include: classes.yml

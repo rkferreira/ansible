@@ -1,0 +1,3 @@
+---
+httpd_conf_main: /etc/httpd/conf/httpd.conf
+httpd_conf_confd: /etc/httpd/conf.d/

@@ -1,0 +1,19 @@
+---
+
+- name: Include black list for Janus servers
+  lineinfile:
+    path: "/etc/apt/apt.conf.d/50unattended-upgrades"
+    create: no
+    backup: no
+    firstmatch: yes
+    insertafter: '^Unattended-Upgrade::Package-Blacklist \{'
+    state: present
+    line: "{{ item.line }}"
+    regexp: "{{ item.regexp }}"
+  with_items:
+    - { line: "\t\"janus*\";", regexp: "janus" }
+    - { line: "\t\"zabbix-agent*\";", regexp: "zabbix-agent" }
+  when: 
+    - ubuntu_unattendedupgrades_server_class == "janusgw"
+
+

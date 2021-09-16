@@ -1,0 +1,29 @@
+---
+
+- name: Install supervisor package
+  package:
+    name: supervisor
+    state: present
+
+- name: Install supervisor main conf file
+  template:
+    src: "{{ role_path }}/templates/supervisord.j2"
+    dest: "{{ supervisorctl_main_conf_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload supervisorctl
+
+- name: Install supervisor app files
+  template:
+    src: "{{ role_path }}/templates/program.j2"
+    dest: "{{ item.value.config | default(supervisorctl_conf_file_default) }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_dict:
+    - "{{ supervisorctl_supervised_apps }}"
+  when: supervisorctl_supervised_apps is defined
+  notify: Reread supervisorctl
+  tags:
+    - supervisorctl_apps

@@ -1,0 +1,193 @@
+- hosts: 127.0.0.1
+  vars:
+    #
+    dnsmasq_listenaddress: "127.0.0.1"
+    dnsmasq_externaldns: "172.31.0.2"
+    #
+    filebeat_config_output_logstash: 'logstash.aws.com:5044'
+    filebeat_config_paths:
+      - /var/log/nginx/*.log
+    #
+    php_fpm_version: '7.3'
+    php_fpm_config_class: myapp09
+    php_fpm_additional_pkgs:
+      - php-pecl-redis
+    php_fpm_ensure_enabled: true
+    php_fpm_ensure_state: stopped
+    php_fpm_systemd_path: /etc/systemd/system/php-fpm.service.d/override.conf
+    #
+    php_pear_modules:
+      - timezonedb
+    #
+    aws_codedeploy_service_state: stopped
+    #
+    aws_helper_appconfig_set: true
+    aws_helper_appconfig_conf:
+      -
+        region: sa-east-1
+        application: MyApp09
+        env: MyApp09-Production
+        config: MyApp09
+        destination_file: /home/config_mysql.inc.php
+    #
+    linux_service_helper_systemd:
+      - name: nginx
+        path: /usr/lib/systemd/system/nginx.service.d/override.conf
+    #
+    linux_tunning_server_class: myapp09
+    #
+    nginx_enable: true
+    nginx_state: present
+    nginx_start: true
+    nginx_install_from: nginx_repository
+    nginx_type: opensource
+    nginx_modules:
+      njs: false
+      perl: false
+      waf: false
+      geoip: false
+      image_filter: false
+      rtmp: false
+      xslt: false
+    nginx_cleanup_config: false
+    nginx_http_upload_enable: true
+    nginx_http_upload_src: ../files/myapp09/*
+    nginx_http_upload_dest: /etc/nginx/
+    nginx_main_template_enable: true
+    nginx_main_template:
+      template_file: nginx.conf.j2
+      conf_file_name: nginx.conf
+      conf_file_location: /etc/nginx/
+      user: nginx
+      worker_processes: 4
+      pid: /var/run/nginx.pid
+      error_log:
+        location: /var/log/nginx/error.log
+        level: warn
+      worker_rlimit_nofile: 65536
+      worker_connections: 32768
+      http_enable: true
+      http_custom_options:
+        - index index.php index.html
+      http_settings:
+        access_log_format:
+          - name: main
+            format: |
+              '$remote_addr - $remote_user [$time_local] "$request" '
+              '$status $body_bytes_sent "$http_referer" '
+              '"$http_user_agent" "$http_x_forwarded_for"'
+        access_log_location:
+          - name: main
+            location: /var/log/nginx/access.log
+        keepalive_timeout: 10
+        cache: false
+        rate_limit: false
+        keyval: false
+        server_tokens: "off"
+      http_global_autoindex: false
+      stream_enable: false
+    # nginx status
+    #
+    nginx_status_enable: true
+    nginx_status_location: /etc/nginx/conf.d/stub_status.conf
+    nginx_status_port: 8080
+    nginx_status_log: true
+    # nginx http/https
+    #
+    nginx_http_template_enable: true
+    nginx_http_template:
+      painel:
+        template_file: http/default.conf.j2
+        conf_file_name: default.conf
+        conf_file_location: /etc/nginx/conf.d/
+        servers:
+          myapp09_http:
+            root: /home/app/api/public
+            server_name: "*.mydomain.com *.mydomain.com.br"
+            custom_options:
+              - gzip on
+              - gzip_min_length 1000
+              - gzip_proxied expired no-cache no-store private auth
+              - gzip_types text/plain text/css text/html text/xml application/javascript application/xml
+            listen:
+              listen_painel:
+                ip: 0.0.0.0
+                port: 80
+                ssl: false
+                opts:
+                  - default_server
+                  - backlog=8192
+            web_server:
+              http_demo_conf: false
+              locations:
+                root:
+                  location: /
+                  include_files:
+                    - limit_httpmethods
+                    - redirect_rules_myapp09
+                    - rewrite_rules_api
+                    - cache_rules_static
+                  custom_options:
+                    - root /app/api/public
+                    - try_files $uri $uri/ @rewriteApi
+                rewriteApi:
+                  location: "@rewriteApi"
+                  custom_options:
+                    - rewrite ^/(.*)$ /rewrite.php?_x=$1
+                doc:
+                  location: /doc
+                  include_files:
+                    - limit_httpmethods
+                    - cache_rules_static
+                  custom_options:
+                    - root /app
+                painel:
+                  location: /myapp09
+                  include_files:
+                    - limit_httpmethods
+                    - redirect_rules_painel
+                    - cache_rules_static
+                  custom_options:
+                    - root /app
+                php:
+                  location: ~ ^/(doc|myapp09)/.+\.php
+                  include_files:
+                    - limit_httpmethods
+                    - redirect_rules_myapp09
+                    - fastcgi_params
+                  custom_options:
+                    - client_body_buffer_size 32k
+                    - fastcgi_read_timeout 75s
+                    - fastcgi_pass 127.0.0.1:8081
+                    - fastcgi_index index.php
+                    - fastcgi_param HTTP_PROXY ""
+                    - root /app
+                root_php:
+                  location: ~ [^/]\.php
+                  include_files:
+                    - limit_httpmethods
+                    - fastcgi_params
+                    - rewrite_rules_api
+                  custom_options:
+                    - fastcgi_pass 127.0.0.1:8082
+                    - fastcgi_index index.php
+                    - fastcgi_param HTTP_PROXY ""
+                    - root /home/app/api/public
+                    - try_files $uri $uri/
+
+  roles:
+    - linux-tunning
+    - dnsmasq
+    - cloudwatch-agent
+    - nginxinc.nginx
+    - php-fpm
+    - php-pear
+    - php-composer
+    - aws-codedeploy
+    - ldap-client
+    - sshd
+    - sudoers
+    - aws-helper
+    - linux-service-helper
+    - filebeat
+    - myapp09

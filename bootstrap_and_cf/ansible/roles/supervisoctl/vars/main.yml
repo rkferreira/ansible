@@ -1,0 +1,2 @@
+---
+supervisorctl_conf_file_default: "{{ supervisorctl_conf_path }}/{{ item.value.name }}.conf"

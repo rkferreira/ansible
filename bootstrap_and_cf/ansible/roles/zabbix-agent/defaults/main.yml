@@ -1,0 +1,13 @@
+---
+zabbix_agent_version: 1:3.4.*
+zabbix_agent_conf:
+  server: prd-zabbix.aws.com
+  serveractive: prd-zabbix.aws.com
+  logfile: /var/log/zabbix/zabbix_agentd.log
+  includeconfsdir: /etc/zabbix/zabbix_agentd.d/
+  user: zabbix
+  startagents: 5
+  metadatasuffix: '|prod'
+#zabbix_agent_custom_checks:
+#  - mycustomcheck
+#  - mycustomcheck2

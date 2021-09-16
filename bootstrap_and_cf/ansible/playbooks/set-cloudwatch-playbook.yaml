@@ -1,0 +1,3 @@
+- hosts: myapp06
+  roles:
+    - cloudwatch-agent

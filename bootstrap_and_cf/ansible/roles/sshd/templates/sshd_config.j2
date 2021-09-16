@@ -1,0 +1,8 @@
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+UsePAM yes
+AcceptEnv LANG LC_*
+Subsystem	sftp	/usr/lib/openssh/sftp-server
+{% for key, value in item.value.items() %}
+{{ key }} {{ value }}
+{% endfor %}

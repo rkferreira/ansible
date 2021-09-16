@@ -1,0 +1,13 @@
+Hostname={{ hname }}
+Server={{ zabbix_agent_conf.server }}
+ServerActive={{ zabbix_agent_conf.serveractive }}
+LogFile={{ zabbix_agent_conf.logfile }}
+User={{ zabbix_agent_conf.user }}
+DebugLevel=1
+EnableRemoteCommands=1
+PidFile=/var/run/zabbix/zabbix_agentd.pid
+ListenPort=10050
+Timeout=15
+HostMetadata={{ hmetadata }}
+StartAgents={{ zabbix_agent_conf.startagents }}
+Include={{ zabbix_agent_conf.includeconfsdir }}*.conf

@@ -1,0 +1,2 @@
+export Z_GIT_S3="my-ansible-bucket"
+export Z_GIT_AWS_PROFILE="my-aws-profile"

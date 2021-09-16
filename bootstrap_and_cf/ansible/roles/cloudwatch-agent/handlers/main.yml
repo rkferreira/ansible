@@ -1,0 +1,12 @@
+---
+- name: Unzip and install
+  unarchive:
+    remote_src: yes
+    list_files: yes
+    owner: root
+    group: root
+    src: /tmp/CloudWatchMonitoringScripts.zip
+    dest: /usr/local
+
+- name: test mon
+  command: /usr/local/aws-scripts-mon/mon-put-instance-data.pl --mem-util --swap-util --disk-space-util --disk-path=/ --verbose

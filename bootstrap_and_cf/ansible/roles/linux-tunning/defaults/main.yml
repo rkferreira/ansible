@@ -1,0 +1,4 @@
+---
+linux_tunning_sysctl_file: /etc/sysctl.conf
+linux_tunning_limits_file: /etc/security/limits.conf
+linux_tunning_server_class: None

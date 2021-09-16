@@ -1,0 +1,36 @@
+---
+
+- name: Install package nscd
+  package:
+    name: nscd
+    state: present
+
+- name: Check conf file exists
+  stat:
+    path: "/etc/nscd.conf"
+  register: nscdconf
+
+- name: Fix default conf
+  block:
+    - name: Fix HOSTS positive-time-to-live
+      lineinfile:
+        path: "/etc/nscd.conf"
+        line: "\tpositive-time-to-live\thosts\t\t600"
+        state: present
+        regexp: 'positive-time-to-live.*hosts'
+        backup: yes
+      notify: nscd restart
+
+    - name: Fix HOSTS persistent
+      lineinfile:
+        path: "/etc/nscd.conf"
+        line: "\tpersistent\t\thosts\t\tno"
+        state: present
+        regexp: 'persistent.*hosts'
+        backup: yes
+      notify: nscd restart
+
+  when:
+    - nscdconf is defined
+    - nscdconf.stat is defined
+    - nscdconf.stat.exists

@@ -1,0 +1,77 @@
+---
+- name: Install PHP from stagged S3
+  block:
+  - name: Create destination folder
+    file:
+      path: /usr/local/packages
+      state: directory
+      mode: '0755'
+
+  - name: Stage PHP from S3
+    shell: aws s3 sync s3://"{{ php_pkg_bucket_path }}" /usr/local/packages/
+    when:
+      - php_pkg_bucket_path is defined
+
+  - name: Install createrepo
+    yum:
+      name: createrepo
+
+  - name: Create local repo
+    shell: createrepo /usr/local/packages
+
+  - name: Yum local repo
+    yum_repository:
+      name: phplocalrepo
+      description: custom php packages
+      baseurl: file:///usr/local/packages/
+      gpgcheck: no
+      enabled: yes
+
+  - name: Install local package
+    yum:
+      name: "{{ php_pkgs }}"
+
+  - name: PHP ini
+    copy:
+      src: "{{ role_path }}/files/php.ini.{{ php_config_class }}"
+      dest: "{{ php_phpini_path }}"
+      backup: yes
+      owner: root
+      group: root
+      mode: '0644'
+    when:
+      - php_phpini_path is defined
+      - php_config_class is defined
+
+  when:
+    - php_version is defined
+    - php_version == 'custom'
+
+- name: Install Remi Php
+  block:
+  - name: Remi repo
+    yum:
+      name: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    when:
+      - ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+      - ansible_distribution_major_version == '7'
+
+  - name: Remi packages
+    yum:
+      name: "{{ php_remi_pkgs }}"
+
+  - name: Remi PHP ini
+    copy:
+      src: "{{ role_path }}/files/remi/php.ini.{{ php_config_class }}"
+      dest: "{{ php_remi_phpini_path }}"
+      backup: yes
+      owner: root
+      group: root
+      mode: '0644'
+    when:
+      - php_remi_phpini_path is defined
+      - php_config_class is defined
+
+  when:
+    - php_remi | bool
+    - php_remi_pkgs is defined

@@ -1,0 +1,25 @@
+plugin: aws_ec2
+cache_timeout: 60
+ansible_user: ec2-user
+ansible_ssh_private_key_file: ~/.ssh/myapp2.pem
+regions:
+  - us-east-1
+aws_profile: 'sre-myapp2'
+hostnames:
+  - tag:Name
+  - instance-id
+  - private_ip_address
+  - public_ip_address
+  - public_dns_name
+keyed_groups:
+  - key: tags.platform
+    separator: ''
+  - key: tags.env
+    separator: ''
+  - key: placement.region
+    separator: ''
+  - key: key_name
+    separator: ''
+compose:
+  # set the ansible_host variable to connect with the private IP address without changing the hostname
+  ansible_host: private_ip_address

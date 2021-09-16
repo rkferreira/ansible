@@ -1,0 +1,24 @@
+#!/bin/sh
+
+source .githooks/env_pre-push
+echo "Pre-push hook"
+echo "env:"
+echo "  S3     : ${Z_GIT_S3}"
+echo "  PROFILE: ${Z_GIT_AWS_PROFILE}"
+echo
+read -p "Upload to S3? (y/n)" -n 1 -r < /dev/tty
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+  echo "Pushing to S3"
+  echo "Creating tarball"
+  git ls-tree -r origin --name-only | tar -cvzf /tmp/ansible.tar.gz -T -
+  echo
+  echo "Sending to S3 s3://${Z_GIT_S3}/"
+  echo
+  aws --profile ${Z_GIT_AWS_PROFILE} s3 cp /tmp/ansible.tar.gz s3://${Z_GIT_S3}/
+  aws --profile ${Z_GIT_AWS_PROFILE} s3 ls s3://${Z_GIT_S3}/ansible.tar.gz
+  echo
+else
+  echo "Skip S3"
+fi

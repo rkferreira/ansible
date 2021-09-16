@@ -1,0 +1,21 @@
+---
+- name: Install or Remove package
+  package:
+    name: apparmor
+    state: "{{ apparmor_pkg_state }}"
+
+- name: Configure service
+  service:
+    name: apparmor
+    state: "{{ apparmor_svc_state }}"
+    enabled: "{{ apparmor_svc_enabled }}"
+
+- name: Disable grub
+  copy:
+    src: "{{ role_path }}/files/apparmor.cfg"
+    dest: "/etc/default/grub.d/apparmor.cfg"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: update grub
+  when: apparmor_svc_enabled == "no"

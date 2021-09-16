@@ -1,0 +1,4 @@
+---
+apparmor_pkg_state: present
+apparmor_svc_state: started
+apparmor_svc_enabled: "yes"

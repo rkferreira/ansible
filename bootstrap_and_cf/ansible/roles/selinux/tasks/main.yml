@@ -1,0 +1,9 @@
+---
+
+- name: Selinux disabled
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX=.*'
+    line: SELINUX={{ selinux_status }}
+  when:
+    - selinux_status is defined

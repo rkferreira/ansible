@@ -1,0 +1,73 @@
+---
+
+- name: Include Amazon Linux 2
+  include: amazonlinux2.yml
+
+- name: Install base packages
+  package:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - php-fpm
+      - php-cli
+      - php-common
+
+- name: Install additional packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ php_fpm_additional_pkgs }}"
+  when:
+    - php_fpm_additional_pkgs is defined
+
+- name: Copy conf files for config class
+  block:
+    - name: Copy php.ini
+      copy:
+        src: "{{ role_path }}/files/php.ini.{{ php_fpm_config_class }}"
+        dest: "/etc/php.ini"
+        backup: yes
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Copy php-fpm pool
+      copy:
+        src: "{{ role_path }}/files/www.conf.{{ php_fpm_config_class }}"
+        dest: "{{ php_fpm_config_dir }}/www.conf"
+        backup: yes
+        owner: root
+        group: root
+        mode: '0644'
+
+  when: php_fpm_config_class is defined
+
+- name: Service state
+  service:
+    name: php-fpm
+    state: started
+    enabled: yes
+  when: php_fpm_ensure_started is defined
+
+- name: Systemd enabled and set service restart policy
+  block:
+    - name: Enabled state
+      service:
+        name: php-fpm
+        state: "{{ php_fpm_ensure_state }}"
+        enabled: yes
+
+    - name: Override systemd php-fpm service values
+      copy:
+        src: "{{ role_path }}/files/systemd_service_override"
+        dest: "{{ php_fpm_systemd_path }}"
+        backup: no
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Systemd reload
+  when:
+    - php_fpm_ensure_enabled is defined
+    - php_fpm_ensure_state is defined
+    - php_fpm_systemd_path is defined

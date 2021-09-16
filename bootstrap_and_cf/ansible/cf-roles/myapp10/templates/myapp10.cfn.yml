@@ -1,0 +1,229 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Myapp10-PRD - App 10 - Stack'
+
+Parameters:
+
+  Ec2Name:
+    Description: 'Ec2 tag Name'
+    Type: String
+
+  EipAddr:
+    Description: 'existing EIP address'
+    Type: String
+
+  ImgArn:
+    Description: 'custom image'
+    Type: String
+    Default: 'ami-1x1x1x'
+
+  InstanceType:
+    Description: 'EC2 instance type'
+    Type: String
+    Default: 't3.xlarge'
+
+  InstanceKeyPair:
+    Description: 'key pair'
+    Type: String
+    Default: 'sre'
+
+  Azs:
+    Description: 'Availability zones.'
+    Type: String
+    Default: 'us-east-1b'
+
+  VpcIdE:
+    Description: 'Existing VPC id.'
+    Type: List<AWS::EC2::VPC::Id>
+    Default: 'vpc-1x1x1x'
+
+  SubnetIds:
+    Description: 'Ec2 Existing Subnets id.'
+    Type: String
+    Default: 'subnet-1x1x1x'
+
+  SgMgmt:
+    Description: 'SG_MGMT security group id'
+    Type: String
+    Default: 'sg-1x1x1x'
+
+  CreateIamProfile:
+    Description: 'yes or no'
+    Type: String
+    Default: 'no'
+    AllowedValues:
+      - 'no'
+      - 'yes'
+
+
+Conditions:
+  CondCreateIamProfile: !Equals [ !Ref "CreateIamProfile", 'yes' ]
+
+
+Resources:
+
+  EipAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref "MyappEc2"
+      EIP: !Ref "EipAddr"
+    DependsOn:
+      - MyappEc2
+
+  MyappEc2:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: !Ref "Azs"
+      SubnetId: !Ref "SubnetIds"
+      LaunchTemplate:
+        LaunchTemplateId: !Ref "Lt1"
+        Version: !GetAtt "Lt1.LatestVersionNumber"
+      Tags:
+        - Key: Name
+          Value: !Ref "Ec2Name"
+    DependsOn:
+      - Lt1
+
+  IamMyapp:
+    Type: AWS::IAM::Role
+    Condition: CondCreateIamProfile
+    Properties:
+      RoleName: myapp10-ec2-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSCodeCommitReadOnly
+      Tags:
+        - Key: env
+          Value: prod
+        - Key: product
+          Value: myapp10
+        - Key: platform
+          Value: myapp
+        - Key: iac
+          Value: cloudformation
+
+  Ec2ProfileMyapp:
+    Type: AWS::IAM::InstanceProfile
+    Condition: CondCreateIamProfile
+    Properties:
+      Roles:
+        - !Ref "IamMyapp"
+      InstanceProfileName: myapp10-myapp10-sre-profile
+    DependsOn:
+      - IamMyapp
+
+  Ec2ProfileWaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Condition: CondCreateIamProfile
+    DependsOn: Ec2ProfileMyapp
+
+  WaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+
+  WaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    Properties:
+      Handle: !If [CondCreateIamProfile, !Ref Ec2ProfileWaitHandle, !Ref WaitHandle]
+      Timeout: "30"
+      Count: 0
+
+  Lt1:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId: !Ref "ImgArn"
+        IamInstanceProfile:
+          Name: "myapp10-myapp10-sre-profile"
+        InstanceType: !Ref "InstanceType"
+        KeyName: !Ref "InstanceKeyPair"
+        SecurityGroupIds:
+          - !Ref "SgMgmt"
+          - "sg-1x1x1x"
+          - "sg-1x1x1x"
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              DeleteOnTermination: 'true'
+              Encrypted: 'true'
+              VolumeSize: 50
+              VolumeType: gp2
+        UserData:
+          'Fn::Base64': !Sub |
+             #!/bin/bash -xe
+             export PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:/usr/local/bin"
+             yum install unzip -y
+             cd /tmp
+             wget -O /tmp/aws-cfn-bootstrap-latest.tar.gz 'https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz'
+             mkdir -p /tmp/aws-cfn-bootstrap-latest
+             tar -xvzf aws-cfn-bootstrap-latest.tar.gz --strip-components=1 -C /tmp/aws-cfn-bootstrap-latest
+             python2 -m easy_install /tmp/aws-cfn-bootstrap-latest
+             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+             unzip awscliv2.zip
+             ./aws/install
+             wget -O /tmp/CloudWatchMonitoringScripts.zip 'https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScripts-1.2.2.zip'
+             unzip -d /usr/local/ /tmp/CloudWatchMonitoringScripts.zip
+             yum install -y perl-Switch perl-DateTime perl-Sys-Syslog perl-LWP-Protocol-https perl-Digest-SHA
+             echo '*/5 * * * * /usr/local/aws-scripts-mon/mon-put-instance-data.pl --mem-util --swap-util --disk-space-util --disk-path=/ --from-cron' >> /var/spool/cron/root
+             cd /home/app/ && git checkout -f master && git pull && git submodule update --init --recursive && sudo killall -9 php && composer update  --no-interaction --optimize-autoloader --prefer-dist
+             reboot -f
+             ### start cloud init
+             #/usr/local/bin/cfn-init -v --stack ${AWS::StackName} -c default -r Lt1 --region ${AWS::Region}
+             #/usr/local/bin/cfn-signal -e $? --resource MyappEc2 --region ${AWS::Region} --stack ${AWS::StackName} || /bin/true
+             #/usr/bin/sleep 5
+             #/usr/sbin/reboot --reboot -f
+        TagSpecifications:
+          -
+            ResourceType: 'instance'
+            Tags:
+              - Key: env
+                Value: prod
+              - Key: product
+                Value: myapp10
+              - Key: platform
+                Value: myapp
+              - Key: iac
+                Value: cloudformation
+    DependsOn:
+      - WaitCondition
+    # order: packages, groups, users, sources, files, commands, and then services.
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          default:
+            - "Step1"
+            - "Step2"
+        Step1:
+          commands:
+            getAnsible:
+              command: "/usr/local/bin/aws s3 cp s3://sre-resources/ansible.tar.gz /usr/local/"
+        Step2:
+          commands:
+            extractAnsible:
+              command: "/usr/bin/tar -xvzf /usr/local/ansible.tar.gz -C /usr/local/"
+            runAnsible:
+              command: "/usr/local/ansible/run_bootstrap.sh myapp10"
+              cwd: "/usr/local/ansible/"
+
+
+Outputs:
+
+  Ec2Id:
+    Value: !Ref "MyappEc2"
+
+  Ec2PrivateIp:
+    Value: !GetAtt MyappEc2.PrivateIp
+
+  Ec2PublicIp:
+    Value: !GetAtt MyappEc2.PublicIp

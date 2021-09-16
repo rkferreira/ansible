@@ -1,0 +1,14 @@
+- hosts: 127.0.0.1
+  vars:
+    # linux-tunning role
+    #
+    linux_tunning_server_class: myapp08
+  roles:
+    - linux-tunning
+    - cloudwatch-agent
+    - apparmor
+    - ldap-client
+    - sshd
+    - sudoers
+    - nscd
+    - asterisk

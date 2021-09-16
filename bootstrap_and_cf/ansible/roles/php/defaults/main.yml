@@ -1,0 +1,3 @@
+---
+php_remi: false
+php_phpini_path: /etc/php.ini

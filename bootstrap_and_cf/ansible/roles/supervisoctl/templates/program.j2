@@ -1,0 +1,4 @@
+[program:{{ item.value.name }}]
+{% for key, value in item.value.conf_file.items() %}
+{{ key }}={{ value }}
+{% endfor %}

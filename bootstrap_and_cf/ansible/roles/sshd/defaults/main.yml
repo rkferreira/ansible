@@ -1,0 +1,8 @@
+---
+sshd_ec2_instance_connect: absent
+sshd_config:
+  main:
+    AuthorizedKeysCommand: /usr/lib/openssh/ldap
+    AuthorizedKeysCommandUser: root
+    X11Forwarding: "no"
+    PrintMotd: "no"

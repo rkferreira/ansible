@@ -1,0 +1,22 @@
+---
+
+- name: Enable/Disable services
+  service:
+    name: "{{ item.value.name }}"
+    state: "{{ item.value.state }}"
+    enabled: "{{ item.value.enabled }}"
+  with_dict:
+    - "{{ linux_service_helper_conf }}"
+  when: linux_service_helper | bool
+
+- name: Override Systemd files
+  copy:
+    src: "{{ role_path }}/files/systemd_{{ item.name }}_override"
+    dest: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items: "{{ linux_service_helper_systemd }}"
+  notify: Systemd reload
+  when:
+    - linux_service_helper_systemd is defined

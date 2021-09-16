@@ -1,0 +1,24 @@
+---
+supervisorctl_bin_path: /usr/bin/supervisorctl
+supervisorctl_main_conf_path: /etc/supervisor/supervisord.conf
+supervisorctl_conf_path: /etc/supervisor/conf.d
+supervisorctl_inethttpserver_username: admin
+supervisorctl_inethttpserver_password: alpargata
+supervisorctl_supervisord_minfds: 262144
+supervisorctl_supervisord_minprocs: 131072
+
+#https://docs.ansible.com/ansible/latest/modules/supervisorctl_module.html
+#    supervisorctl_supervised_apps:
+#      nginx:
+#        name: nginx
+#        state: started
+#        conf_file:
+#          command: /usr/sbin/nginx -c /etc/nginx/nginx.conf -g "daemon off;"
+#          user: root
+#          autostart: 'true'
+#          autorestart: 'true'
+#          startretries: '500'
+#          stderr_logfile: '/var/log/supervisor/%(program_name)s_stderr.log'
+#          stderr_logfile_maxbytes: '10MB'
+#          stdout_logfile: '/var/log/supervisor/%(program_name)s_stdout.log'
+#          stdout_logfile_maxbytes: '10MB'

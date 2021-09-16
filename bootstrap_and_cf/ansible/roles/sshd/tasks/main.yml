@@ -1,0 +1,24 @@
+---
+
+- name: Remove ec2-instance-connect
+  package:
+    name: ec2-instance-connect
+    state: "{{ sshd_ec2_instance_connect }}"
+
+- name: Install packages for sshd
+  package:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - openssh-server
+
+- name: Apply default sshd template
+  template:
+    src: "{{ role_path }}/templates/sshd_config.j2"
+    dest: "/etc/ssh/sshd_config"
+    owner: root
+    group: root
+    mode: '0644'
+  with_dict: "{{ sshd_config }}"
+  notify: Restart sshd

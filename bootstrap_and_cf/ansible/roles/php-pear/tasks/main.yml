@@ -1,0 +1,21 @@
+---
+
+- name: Install needed packages
+  package:
+    name:
+      - php-pear
+      - php-xml
+      - php-devel
+      - gcc
+    state: present
+
+- name: Install pecl modules
+  shell:
+    cmd: "pecl install {{ item }}"
+    chdir: /tmp
+  with_items: "{{ php_pear_modules }}"
+  register: result
+  failed_when:
+    - result.rc != 0
+    - '"is already installed" not in result.stdout'
+  when: php_pear_modules is defined

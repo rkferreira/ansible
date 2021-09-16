@@ -1,0 +1,53 @@
+---
+
+- name: Check if composer exists
+  stat:
+    path: /usr/bin/composer
+  register: php_composer_stat
+
+- name: Install composer
+  block:
+
+    - name: Download composer
+      get_url:
+        url: https://getcomposer.org/installer
+        dest: /tmp/composer-setup.php
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Wait for download
+      wait_for:
+        path: /tmp/composer-setup.php
+        timeout: 120
+
+    - name: Setup composer
+      shell:
+        cmd: php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer --force
+        chdir: /tmp
+        creates: /usr/local/bin/composer
+      environment:
+        HOME: "/root"
+      register: compresult
+      failed_when:
+        - compresult.rc != 0
+        - '"All settings correct for using Composer" not in compresult.stdout'
+
+    - name: Wait for install
+      wait_for:
+        path: /usr/local/bin/composer
+        timeout: 120
+
+    - name: Create symlink
+      file:
+        src: /usr/local/bin/composer
+        dest: /usr/bin/composer
+        owner: root
+        group: root
+        mode: '0755'
+        state: link
+
+  when:
+    - php_composer_stat is defined
+    - php_composer_stat.stat.exists == False
+

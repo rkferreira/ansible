@@ -1,0 +1,6 @@
+---
+
+- name: nscd restart
+  service:
+    name: nscd
+    state: restarted

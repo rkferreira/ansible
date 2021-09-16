@@ -1,0 +1,26 @@
+---
+- name: Install Apache httpd
+  yum:
+    name: httpd
+
+- name: Apache httpd configuration files
+  block:
+    - name: Copy httpd.conf
+      copy:
+        src: "{{ role_path }}/files/{{ httpd_config_class }}/httpd.conf"
+        dest: "{{ httpd_conf_main }}"
+        backup: yes
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Copy conf.d files
+      copy:
+        src: "{{ role_path }}/files/{{ httpd_config_class }}/conf.d/"
+        dest: "{{ httpd_conf_confd }}"
+        backup: no
+        owner: root
+        group: root
+        mode: '0644'
+  when:
+    - httpd_config_class is defined

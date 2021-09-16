@@ -1,0 +1,34 @@
+---
+#- name: Update apt cache
+#  apt:
+#    update_cache: yes
+
+- name: Install packages
+  apt:
+    cache_valid_time: 86400
+    pkg:
+      - unzip
+      - libwww-perl
+      - libdatetime-perl
+
+- name: Check if cwa is installed
+  stat:
+    path: /usr/local/aws-scripts-mon
+  register: cwa
+
+- name: Download cloudwatch-agent
+  get_url:
+    url: https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScripts-1.2.2.zip
+    dest: /tmp/CloudWatchMonitoringScripts.zip
+    mode: '775'
+  when:
+    - not cwa.stat.exists
+  notify: Unzip and install
+
+- name: Install cron
+  cron:
+    state: present
+    disabled: no
+    name: "cloudwatch-metrics"
+    minute: "*/5"
+    job: "/usr/local/aws-scripts-mon/mon-put-instance-data.pl --mem-util --swap-util --disk-space-util --disk-path=/ --from-cron"

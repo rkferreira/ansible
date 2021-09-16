@@ -1,0 +1,58 @@
+---
+- name: Install packages Ubuntu
+  apt:
+    cache_valid_time: 86400
+    pkg:
+      - unzip
+      - libwww-perl
+      - libdatetime-perl
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Install packages RH
+  yum:
+    name:
+      - perl-Switch
+      - perl-DateTime
+      - perl-Sys-Syslog
+      - perl-LWP-Protocol-https
+      - perl-Digest-SHA
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'Amazon'
+
+- name: Check if cwa is installed
+  stat:
+    path: /usr/local/aws-scripts-mon
+  register: cwa
+
+- name: Check if cwa is downloaded
+  stat:
+    path: /tmp/CloudWatchMonitoringScripts.zip
+  register: download
+
+- name: Download cloudwatch-agent
+  get_url:
+    url: https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScripts-1.2.2.zip
+    dest: /tmp/CloudWatchMonitoringScripts.zip
+    mode: '775'
+  when:
+    - not cwa.stat.exists
+    - not download.stat.exists
+
+- name: Unzip and install
+  unarchive:
+    remote_src: yes
+    list_files: yes
+    owner: root
+    group: root
+    src: /tmp/CloudWatchMonitoringScripts.zip
+    dest: /usr/local
+  when:
+    - not cwa.stat.exists
+
+- name: Install cron
+  cron:
+    state: present
+    disabled: no
+    name: "cloudwatch-metrics"
+    minute: "*/5"
+    job: "/usr/local/aws-scripts-mon/mon-put-instance-data.pl --mem-util --swap-util --disk-space-util --disk-path=/ --from-cron --auto-scaling"
+  notify: test mon

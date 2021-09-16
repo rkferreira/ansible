@@ -1,0 +1,98 @@
+- hosts: 127.0.0.1
+  vars:
+    #
+    dnsmasq_listenaddress: "127.0.0.1"
+    dnsmasq_externaldns: "172.31.0.2"
+    dnsmasq_ifcfg_nopeerdns: true
+    #
+    filebeat_config_output_logstash: 'logstash.aws.com:5044'
+    filebeat_config_paths:
+      - /var/log/nginx/*.log
+    #
+    httpd_config_class: myapp07
+    #
+    linux_service_helper: 'true'
+    linux_service_helper_conf:
+      firewalld:
+        name: firewalld
+        state: stopped
+        enabled: 'no'
+    #
+    php_config_class: myapp07
+    php_version: "custom"
+    php_pkg_bucket_path: "sre-resources/packages/centos/php7.0/"
+    php_pkgs:
+      - php-common-7.0.27
+      - php-cli-7.0.27
+      - php-zip-7.0.27
+      - php-pdo-7.0.27
+      - php-xml-7.0.27
+      - php-json-7.0.27
+      - php-mysqlnd-7.0.27
+      - php-pecl-pthreads-3.1.6
+      - php-7.0.27
+    php_remi: true
+    php_remi_phpini_path: /etc/opt/remi/php71/php.ini
+    php_remi_pkgs:
+      - php71-php
+      - php71-php-common
+      - php71-php-json
+      - php71-php-cli
+      - php71-php-xml
+      - php71-php-zip
+      - php71-php-pdo
+      - php71-php-mysqlnd
+    #
+    asterisk_version: sangoma
+    asterisk_epel: true
+    asterisk_rpmfusion: true
+    asterisk_conf_odbc: true
+    asterisk_config_class: myapp07
+    asterisk_conf_bucket_path: 'sre-resources/assets/myapp07/'
+    asterisk_pkgs:
+      - asterisk13-dahdi
+      - asterisk13-configs
+      - asterisk13-odbc
+      - asterisk13-core
+      - asterisk13-voicemail
+      - asterisk13-doc
+      - asterisk-sounds-core-en-ulaw
+    asterisk_extra_pkgs:
+      - sox
+      - mpg123
+      - flac
+      - unixODBC
+      - mysql-connector-odbc
+      - ffmpeg
+      - lame
+      - perl-Crypt-SSLeay
+      - perl-DBI
+      - perl-JSON
+      - sngrep
+      - java-1.8.0-openjdk
+      - git
+    #
+    aws_helper_getsecrets_conf:
+      - name: 'prod/mycompany/myapp07/ssh/pvt-key'
+        dest: /root/.ssh/id_rsa
+        key: sshkey
+    #
+    fail2ban_config_class: myapp07
+
+  roles:
+    - dnsmasq
+    - cloudwatch-agent
+    - ldap-client
+    - sshd
+    - sudoers
+    - filebeat
+    - httpd
+    - php
+    - php-composer
+    - asterisk
+    - aws-helper
+    - fail2ban
+    - linux-service-helper
+    - linux-tunning
+    - selinux
+    - myapp07

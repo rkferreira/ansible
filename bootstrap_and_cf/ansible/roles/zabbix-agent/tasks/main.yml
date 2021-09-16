@@ -1,0 +1,80 @@
+---
+
+- name: Ubuntu or Debian zabbix-agent installation
+  block:
+    - name: Install apt key for zabbix-agent
+      apt_key:
+        url: http://repo.zabbix.com/zabbix-official-repo.key
+        state: present
+
+    - name: Install apt repository for zabix-agent
+      apt_repository:
+        repo: deb http://repo.zabbix.com/zabbix/3.4/ubuntu bionic main
+        state: present
+
+    - name: Install zabbix-agent package
+      package:
+        name: zabbix-agent={{ zabbix_agent_version }}
+        state: present
+      when: zabbix_agent_version != 'latest'
+      notify: restart zabbix-agent
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Rhel/Amazon linux zabbix-agent installation
+  block:
+    - name: Install yum repo for zabbix-ageent
+      yum_repository:
+        name: Zabbix34
+        description: Zabbix 3.4 for Centos / Rhel / Amazon Linux
+        baseurl: https://repo.zabbix.com/zabbix/3.4/rhel/7/$basearch/
+        gpgcheck: no
+        enabled: yes
+
+    - name: Install zabbix-agent package
+      package:
+        name: zabbix-agent-{{ zabbix_agent_version }}.{{ ansible_architecture }}
+        state: present
+      when: zabbix_agent_version != 'latest'
+      notify: restart zabbix-agent
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' or ansible_distribution == 'Amazon'
+
+- name: Install zabbix-agent package
+  package:
+    name: zabbix-agent
+    state: latest
+  when: zabbix_agent_version == 'latest'
+  notify: restart zabbix-agent
+
+- name: Check custom hostname file
+  stat:
+    path: "/var/lib/ansible/aws-helper/hostname"
+  register: fhname
+
+- name: Get custom hostname value
+  shell: cat {{ fhname.stat.path }}
+  register: customHostname
+  when:
+    - fhname is defined
+    - fhname.stat is defined
+    - fhname.stat.path is defined
+
+- name: Zabbix-agent configuration
+  template:
+    src: "{{ role_path }}/templates/zabbix_agentd_conf.j2"
+    dest: "/etc/zabbix/zabbix_agentd.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  vars:
+    hname: "{{ customHostname.stdout|default(ansible_fqdn) }}"
+    hmetadata: "{{ customHostname.stdout | default(ansible_hostname) + zabbix_agent_conf.metadatasuffix }}"
+
+- name: Zabbix-agent custom checks
+  copy:
+    src: "{{ role_path }}/files/{{ item }}.conf"
+    dest: "{{ zabbix_agent_conf.includeconfsdir }}{{ item }}.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items: "{{ zabbix_agent_custom_checks }}"
+  when: zabbix_agent_custom_checks is defined

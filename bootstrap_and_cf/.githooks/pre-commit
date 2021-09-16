@@ -1,0 +1,26 @@
+#!/bin/sh
+
+export PATH="${PATH}:/usr/local/bin/"
+
+RCODE=0
+
+ansible-galaxy collection install -r ansible/collections/requirements.yml -v
+
+source .githooks/env_pre-commit
+echo "Pre-commit hook"
+echo ${CDIR}
+for i in `git ls-files ansible/roles/*/tests/test.yml`; do
+  ansible-playbook ${i} --syntax-check
+  if [ $? -ne 0 ]; then
+    RCODE=1
+  fi
+done
+echo ""
+echo ""
+echo ""
+if [ $RCODE -ne 0 ]; then
+  echo "Cant commit, please check for pre-commit errors above on ansible --syntax-check"
+fi
+echo ""
+exit $RCODE
+
